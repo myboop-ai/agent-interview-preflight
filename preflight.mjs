@@ -1,6 +1,6 @@
 import net from "node:net";
 import { readFileSync } from "node:fs";
-import { parseEnv } from "node:util";
+import * as util from "node:util";
 import { query } from "@anthropic-ai/claude-agent-sdk";
 
 const failures = [];
@@ -8,7 +8,7 @@ const fail = (what, fix) => failures.push(`FAIL ${what}\n     Fix: ${fix}`);
 
 let fileEnv = {};
 try {
-  fileEnv = parseEnv(readFileSync(".env", "utf8"));
+  fileEnv = util.parseEnv?.(readFileSync(".env", "utf8")) ?? {};
 } catch {} // a missing .env is fine when the key is exported
 const shellKey = process.env.ANTHROPIC_API_KEY;
 if (shellKey && fileEnv.ANTHROPIC_API_KEY && shellKey !== fileEnv.ANTHROPIC_API_KEY) {
