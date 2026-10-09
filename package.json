@@ -1,0 +1,8 @@
+{
+  "name": "interview-preflight",
+  "private": true,
+  "type": "module",
+  "scripts": { "preflight": "node preflight.mjs" },
+  "engines": { "node": ">=22" },
+  "dependencies": { "@anthropic-ai/claude-agent-sdk": "^0.3.295" }
+}
