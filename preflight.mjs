@@ -29,8 +29,14 @@ async function checkModel(model) {
       if (m.type === "result" && m.is_error) throw new Error(String(m.result).split("\n")[0]);
     }
   } catch (e) {
-    const why = abort.signal.aborted ? "no answer within 60 seconds" : e.message.split("\n")[0];
-    fail(`model ${model}: ${why}`, "check the key is correct and your network allows api.anthropic.com; if it persists, send us this output");
+    const msg = e.message.split("\n")[0];
+    if (abort.signal.aborted) {
+      fail(`model ${model}: no answer within 60 seconds`, "check your network, VPN or proxy lets https://api.anthropic.com through");
+    } else if (/invalid api key|401|authentication/i.test(msg)) {
+      fail(`model ${model}: the API key was rejected`, "open .env and check the line reads ANTHROPIC_API_KEY=<the full key we sent you> (it starts with sk-ant-, no quotes or spaces)");
+    } else {
+      fail(`model ${model}: ${msg}`, "send us this output and we'll sort it out");
+    }
   } finally {
     clearTimeout(timer);
   }
