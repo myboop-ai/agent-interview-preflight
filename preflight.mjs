@@ -16,7 +16,7 @@ const cloudVars = ["CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_
 if (cloudVars.length) fail(`${cloudVars.join(", ")} is set, which sends model calls to a cloud provider instead of the key`, `unset ${cloudVars.join(" ")} in this shell`);
 
 const hasKey = Boolean(process.env.ANTHROPIC_API_KEY);
-if (!hasKey) fail("ANTHROPIC_API_KEY is not set", "copy .env.example to .env and paste the key we sent you into it");
+if (!hasKey) fail("ANTHROPIC_API_KEY is not set", "in .env, set the line to ANTHROPIC_API_KEY=<the key we sent you> (if there is no .env yet, run cp .env.example .env first)");
 
 async function checkModel(model) {
   const abort = new AbortController();
