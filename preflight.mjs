@@ -8,6 +8,9 @@ if (Number(process.versions.node.split(".")[0]) < 22) {
   fail(`Node ${process.version} is older than 22`, "install Node 22 or later from https://nodejs.org");
 }
 
+const cloudVars = ["CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY"].filter((v) => process.env[v]);
+if (cloudVars.length) fail(`${cloudVars.join(", ")} is set, which sends model calls to a cloud provider instead of the key`, `unset ${cloudVars.join(" ")} in this shell`);
+
 const hasKey = Boolean(process.env.ANTHROPIC_API_KEY);
 if (!hasKey) fail("ANTHROPIC_API_KEY is not set", "export ANTHROPIC_API_KEY=<the key we sent you>, then run this again");
 
