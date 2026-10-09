@@ -1,6 +1,10 @@
 import net from "node:net";
 import { query } from "@anthropic-ai/claude-agent-sdk";
 
+try {
+  process.loadEnvFile();
+} catch {} // a missing .env is fine when the key is exported
+
 const failures = [];
 const fail = (what, fix) => failures.push(`FAIL ${what}\n     Fix: ${fix}`);
 
@@ -12,7 +16,7 @@ const cloudVars = ["CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_
 if (cloudVars.length) fail(`${cloudVars.join(", ")} is set, which sends model calls to a cloud provider instead of the key`, `unset ${cloudVars.join(" ")} in this shell`);
 
 const hasKey = Boolean(process.env.ANTHROPIC_API_KEY);
-if (!hasKey) fail("ANTHROPIC_API_KEY is not set", "export ANTHROPIC_API_KEY=<the key we sent you>, then run this again");
+if (!hasKey) fail("ANTHROPIC_API_KEY is not set", "copy .env.example to .env and paste the key we sent you into it");
 
 async function checkModel(model) {
   const abort = new AbortController();

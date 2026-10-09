@@ -7,9 +7,12 @@ and port 3000. It contains none of the exercise.
 You need Node 22 or later and the API key we sent you.
 
 ```sh
-export ANTHROPIC_API_KEY=<the key we sent you>
+cp .env.example .env    # then paste the key we sent you into .env
 npm install && npm run preflight
 ```
+
+`.env` is gitignored. The exercise repo reads the key the same way, so you
+can copy this file over.
 
 It's done when you see:
 
@@ -20,7 +23,7 @@ Setup works.
 If something fails, it names the check and a one-line fix. The checks:
 
 - **Node 22 or later.** Install a newer Node from https://nodejs.org.
-- **ANTHROPIC_API_KEY is set.** Export the key in the shell you run this from.
+- **ANTHROPIC_API_KEY is set.** Put the key in `.env` (or export it in your shell).
 - **Models `claude-haiku-4-5` and `claude-sonnet-5` answer.** Each one gets a
   one-line request through the Claude Agent SDK. A failure here is usually a
   mistyped key or a network that blocks api.anthropic.com. Each check gives
