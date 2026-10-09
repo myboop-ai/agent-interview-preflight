@@ -1,19 +1,27 @@
 import net from "node:net";
+import { readFileSync } from "node:fs";
+import * as util from "node:util";
 import { query } from "@anthropic-ai/claude-agent-sdk";
-
-try {
-  process.loadEnvFile();
-} catch {} // a missing .env is fine when the key is exported
 
 const failures = [];
 const fail = (what, fix) => failures.push(`FAIL ${what}\n     Fix: ${fix}`);
+
+let fileEnv = {};
+try {
+  fileEnv = util.parseEnv?.(readFileSync(".env", "utf8")) ?? {};
+} catch {} // a missing .env is fine when the key is exported
+const shellKey = process.env.ANTHROPIC_API_KEY;
+if (shellKey && fileEnv.ANTHROPIC_API_KEY && shellKey !== fileEnv.ANTHROPIC_API_KEY) {
+  fail("ANTHROPIC_API_KEY is set in your shell and differs from .env; the shell one wins", "run `unset ANTHROPIC_API_KEY` (and remove it from your shell profile), then run this again");
+}
+for (const [k, v] of Object.entries(fileEnv)) process.env[k] ??= v;
 
 if (Number(process.versions.node.split(".")[0]) < 22) {
   fail(`Node ${process.version} is older than 22`, "install Node 22 or later from https://nodejs.org");
 }
 
-const cloudVars = ["CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY"].filter((v) => process.env[v]);
-if (cloudVars.length) fail(`${cloudVars.join(", ")} is set, which sends model calls to a cloud provider instead of the key`, `unset ${cloudVars.join(" ")} in this shell`);
+const cloudVars = ["CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL"].filter((v) => process.env[v]);
+if (cloudVars.length) fail(`${cloudVars.join(", ")} is set, which sends model calls somewhere other than the key`, `unset ${cloudVars.join(" ")} in this shell`);
 
 const hasKey = Boolean(process.env.ANTHROPIC_API_KEY);
 if (!hasKey) fail("ANTHROPIC_API_KEY is not set", "in .env, set the line to ANTHROPIC_API_KEY=<the key we sent you> (if there is no .env yet, run cp .env.example .env first)");
@@ -26,14 +34,14 @@ async function checkModel(model) {
       prompt: "Reply with the word ok.",
       options: { model, tools: [], settingSources: [], persistSession: false, maxTurns: 1, abortController: abort },
     })) {
-      if (m.type === "result" && m.is_error) throw new Error(String(m.result).split("\n")[0]);
+      if (m.type === "result" && m.is_error) throw new Error(String(m.errors?.[0] ?? m.result ?? m.subtype));
     }
   } catch (e) {
     const msg = e.message.split("\n")[0];
     if (abort.signal.aborted) {
       fail(`model ${model}: no answer within 60 seconds`, "check your network, VPN or proxy lets https://api.anthropic.com through");
     } else if (/invalid api key|401|authentication/i.test(msg)) {
-      fail(`model ${model}: the API key was rejected`, "open .env and check the line reads ANTHROPIC_API_KEY=<the full key we sent you> (it starts with sk-ant-, no quotes or spaces)");
+      fail(`model ${model}: the API key was rejected`, shellKey ? "the key in your shell was used; run `unset ANTHROPIC_API_KEY` so the one in .env is read" : "open .env and check the line reads ANTHROPIC_API_KEY=<the full key we sent you> (it starts with sk-ant-, no quotes or spaces)");
     } else {
       fail(`model ${model}: ${msg}`, "send us this output and we'll sort it out");
     }
